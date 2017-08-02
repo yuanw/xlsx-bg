@@ -10,6 +10,7 @@ import           Data.Conduit                 (($$+-))
 
 import qualified Data.Text.Internal           as Text
 import qualified Network.Google               as Google
+import qualified Control.Exception            as Exception
 import           Network.Google.Auth          (Auth, Credentials (..),
                                                initStore)
 import           Network.Google.Auth.Scope    (AllowScopes (..), concatScopes)
@@ -60,6 +61,9 @@ getDataSet projectName dataSetName = do
     -- we will be using below, which will be enforced by the compiler:
     env  <- Google.newEnvWith c lgr m <&> (Google.envScopes .~ BigQuery.bigQueryScope)
     runResourceT . Google.runGoogle env $ Google.send $ BigQuery.dataSetsGet dataSetName projectName
+
+tryInsertDataSet :: IO (Either Google.Error BigQuery.DataSet)
+tryInsertDataSet = Exception.try (insertDataSet "bigquery-public-data" "hacker_new")
 
 getUserToken cres =
   case cres of
