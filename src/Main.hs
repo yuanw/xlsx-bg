@@ -50,6 +50,17 @@ insertDataSet projectName dataSetName = do
     runResourceT . Google.runGoogle env $ Google.send $ BigQuery.dataSetsInsert (makeDataSet projectName dataSetName) projectName
 
 
+getDataSet :: Text.Text -> Text.Text -> IO BigQuery.DataSet
+getDataSet projectName dataSetName = do
+    lgr  <- Google.newLogger Google.Debug stdout
+    m <- liftIO (newManager tlsManagerSettings) :: IO Manager
+    c <- Google.getApplicationDefault m
+    -- Create a new environment which will discover the appropriate
+    -- AuthN/AuthZ credentials, and explicitly state the OAuth scopes
+    -- we will be using below, which will be enforced by the compiler:
+    env  <- Google.newEnvWith c lgr m <&> (Google.envScopes .~ BigQuery.bigQueryScope)
+    runResourceT . Google.runGoogle env $ Google.send $ BigQuery.dataSetsGet dataSetName projectName
+
 getUserToken cres =
   case cres of
     FromUser u -> Just u
@@ -68,4 +79,6 @@ isClientCred cres =
     _              -> False
 
 main :: IO ()
-main = print "wtf"
+main = do 
+   dataSet <- getDataSet "bigquery-public-data" "hacker_new"
+   print dataSet
